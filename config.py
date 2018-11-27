@@ -4,7 +4,7 @@ Author: Roee Hay / Aleph Research / HCL Technologies
 
 from serializable import *
 import json
-import ConfigParser
+import configparser
 DATA_PATH = "./data.json"
 USER_CONFIG_PATH = "./abootool.cfg"
 import io
