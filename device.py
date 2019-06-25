@@ -223,7 +223,7 @@ class Device:
 
         except FastbootRemoteFailure as e:
             r = self.get_last_fb_output()
-            error = e.msg
+            error = e.msg.decode()
             if self.is_fb_error(error+r, cmd):
                 raise FastbootCommandNotFound()
             raise FastbootRemoteFailure(error)

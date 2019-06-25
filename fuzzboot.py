@@ -23,7 +23,6 @@ def main():
     parser.add_argument('-e','--oem', dest='oem', help='Specify OEM to load ABOOT strings of, otherwise try to autodetect')
     parser.add_argument('-d','--device', dest='device', help='Specify device to load ABOOT strings of, otherwise try to autodetect')
     parser.add_argument('-b','--build', dest='build', help='Specify build to load ABOOT strings of, otherwise try to autodetect')
-    parser.add_argument('-B','--blob', action='store_true', default=False, dest='treat_as_blob', help="Treat specified path as ABOOT blob")
 
     parser.add_argument('-r', '--resume', type=int, default=0, dest='index', help='Resume from specified string index')
     parser.add_argument('-i', '--ignore', dest='ignore_re', help='Ignore pattern (regexp)')
@@ -38,6 +37,8 @@ def main():
 
     parser_add = subparsers.add_parser('add', help='add target image')
     parser_add.add_argument('-p','--images-path', help="Add ABOOT strings from OTA/Factory images. Either a file or a directory.")
+    parser_add.add_argument('-B','--blob', action='store_true', default=False, dest='treat_as_blob', help="Treat specified path as ABOOT blob")
+    parser_add.add_argument('--raw', action='store_true', help="read images_path as raw binary file")
     parser_add.add_argument('-S','--string-prefix', default="", dest='string_prefix', help="When inserting new images, only treat strings with specified prefix")
 
     args = parser.parse_args()
@@ -47,15 +48,21 @@ def main():
     if args.moreverbose:
         log.setVerbose(True)
 
+    if 'raw' in args and args.raw:
+        args.treat_as_blob = True
+        args.oem = args.oem or 'unknown'
+        args.device = args.device or 'unknown'
+        args.build = args.build or 'unknown'
+
     I("Welcome to fuzzboot")
 
     Config.overlay(args.__dict__)
     T("Config = %s", Config)
 
-    if args.treat_as_blob:
-        if not args.oem or not args.device or not args.build:
-            E("Missing OEM/Device/Build specifiers")
-            return 1
+    # if args.treat_as_blob:
+    #     if not args.oem or not args.device or not args.build:
+    #         E("Missing OEM/Device/Build specifiers")
+    #         return 1
 
     if args.aboots_list:
         I("BY OEM:")
@@ -70,10 +77,6 @@ def main():
 
     if args.extend == 'add':
         if args.images_path:
-            if Config.get_config().treat_as_blob:
-                Config.get_config().oem = Config.get_config().oem or 'oem'
-                Config.get_config().device = Config.get_config().device or 'device'
-                Config.get_config().build = Config.get_config().build or 'build'
             image.add(args.images_path)
             return 0
 
