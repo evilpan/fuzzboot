@@ -22,7 +22,7 @@ class OEMTester:
         self.timedout.clear()
         self.usberror.clear()
 
-        if Config.use_strings_generator:
+        if Config.get_config().use_strings_generator:
             n = 0
         else:
             n = len(self.strings)
@@ -48,11 +48,11 @@ class OEMTester:
     """
     @staticmethod
     def get_relevant_bootloaders(device):
-        if Config.device:
-            return aboot.by_device(Config.device)
+        if Config.get_config().device:
+            return aboot.by_device(Config.get_config().device)
 
-        if Config.oem:
-            return aboot.by_oem(Config.oem)
+        if Config.get_config().oem:
+            return aboot.by_oem(Config.get_config().oem)
 
         if "" == device.device():
             I("Cannot detect device identifier, considering all ABOOTs")
@@ -63,7 +63,7 @@ class OEMTester:
         if len(bootloaders) == 0:
             I("Cannot find bootloader images for %s, trying to resolve its OEM", device.device())
             try:
-                vendor = Config.oems[device.device()]
+                vendor = Config.get_config().oems[device.device()]
                 I("Falling back for images of %s", vendor)
                 return aboot.by_oem(vendor)
 
@@ -79,13 +79,12 @@ class OEMTester:
     """
     @staticmethod
     def get_strings(bootloaders):
-        if Config.use_strings_generator:
+        if Config.get_config().use_strings_generator:
             I("Using strings generator...")
             return OEMTester.gen_strings(bootloaders)
 
         I("Loading strings...")
-        strings = []
-        map(lambda x: strings.append(x), OEMTester.gen_strings(bootloaders))
+        strings = list(OEMTester.gen_strings(bootloaders))
         I("Loaded %d strings from %d ABOOTs", len(strings), len(bootloaders))
         return strings
 
@@ -103,7 +102,7 @@ class OEMTester:
                 if s in strings:
                     continue
 
-                if Config.substrings:
+                if Config.get_config().substrings:
                     for x in OEMTester.get_substrings(s):
                         if x in strings:
                             continue
@@ -113,7 +112,7 @@ class OEMTester:
                             yield x
                     continue
 
-                if Config.split_space:
+                if Config.get_config().split_space:
                     l = re.split(r"\s", s)
                     if len(l) > 1:
                         x = l[0]
@@ -139,7 +138,7 @@ class OEMTester:
         if resume == 0:
             return
         I("Resuming from %d", resume)
-        if Config.use_strings_generator:
+        if Config.get_config().use_strings_generator:
             for i, x in enumerate(self.strings):
                 if i == resume:
                     break
@@ -184,7 +183,7 @@ class OEMTester:
                     status = '-'
                     o = Device.normalize_fb_error(msg+r)
                     if "lock" in o or "restricted" in o or "support" in o or "not allowed" in o or "permission denied" in o:
-                        if Config.show_output:
+                        if Config.get_config().show_output:
                             I("(R) fastboot oem %s", s)
 
                         lprcmd = s
@@ -202,7 +201,7 @@ class OEMTester:
 
                 lprcmd = s
 
-                if Config.show_output:
+                if Config.get_config().show_output:
                     I("(%s) fastboot oem %s", status, s)
                     I("Result =\n"+r)
                 else:
@@ -251,10 +250,10 @@ class OEMTester:
 class CommandFilter:
     @classmethod
     def sanitize(cls, s):
-        if Config.strip_whitespace:
+        if Config.get_config().strip_whitespace:
             s = s.strip()
 
-        if Config.remove_breaks:
+        if Config.get_config().remove_breaks:
             s = s.replace("\n", "").replace("\r", "").replace("\f", "").replace("\v", "")
 
         return s.replace("oem ", "")
@@ -264,18 +263,18 @@ class CommandFilter:
         if len(s) == 0:
             return False
 
-        if Config.oem_only and not s.startswith("oem "):
+        if Config.get_config().oem_only and not s.startswith("oem "):
             return False
 
-        if Config.ignore_re and re.match(Config.ignore_re, s):
+        if Config.get_config().ignore_re and re.match(Config.get_config().ignore_re, s):
             T("Ignoring %s (matches pattern)", s)
             return False
 
-        if Config.max_len > 0 and len(s) > Config.max_len:
-            T("Ignoring %s (%d > %d)", s, len(s), Config.max_len)
+        if Config.get_config().max_len > 0 and len(s) > Config.get_config().max_len:
+            T("Ignoring %s (%d > %d)", s, len(s), Config.get_config().max_len)
             return False
 
-        if Config.alphanum_only and not re.match("^([0-9a-zA-Z_-]|\s)+$", s):
+        if Config.get_config().alphanum_only and not re.match("^([0-9a-zA-Z_-]|\s)+$", s):
             T("Ignoring %s (not alphanum)" % s)
             return False
 
@@ -294,7 +293,7 @@ class Progress:
         last_pos = last_pos.replace("\t", "    ")
         sys.stdout.write("\r\033[1m")
 
-        if Config.use_strings_generator:
+        if Config.get_config().use_strings_generator:
             sys.stdout.write("[%06d/+%02d/R%02d/T%02d/E%02d] [CMD: %13.13s] [LAST: %13.13s]" % (i+1, npos, nres, ntim, nerr, cmd, last_pos))
         else:
             sys.stdout.write("[%s] [%06d/%06d/+%02d/R%02d/T%02d/E%02d] [CMD: %8.8s] [LAST: %8.8s]" % (Progress.bar(i+1, n), i+1, n, npos, nres, ntim, nerr, cmd, last_pos))

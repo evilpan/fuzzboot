@@ -29,11 +29,11 @@ class Device:
 
     @staticmethod
     def get_fastboot_devices():
-        return common.UsbHandle.FindDevices(fastboot.DeviceIsAvailable, timeout_ms=Config.timeout)
+        return common.UsbHandle.FindDevices(fastboot.DeviceIsAvailable, timeout_ms=Config.get_config().timeout)
 
     @staticmethod
     def get_adb_devices():
-        return common.UsbHandle.FindDevices(adb_commands.DeviceIsAvailable, timeout_ms=Config.timeout)
+        return common.UsbHandle.FindDevices(adb_commands.DeviceIsAvailable, timeout_ms=Config.get_config().timeout)
 
     def find_fastboot_device(self):
         return self.find_device(Device.get_fastboot_devices())
@@ -67,9 +67,9 @@ class Device:
 
         # fall-backs to adb binary
         if self.serial and re.match(r"\w+", self.serial()):
-            adb_cmd = Config.adb_path + " -s %s reboot bootloader 2>/dev/null" % self.serial
+            adb_cmd = Config.get_config().adb_path + " -s %s reboot bootloader 2>/dev/null" % self.serial
         else:
-            adb_cmd = Config.adb_path + " reboot bootloader 2>/dev/null"
+            adb_cmd = Config.get_config().adb_path + " reboot bootloader 2>/dev/null"
 
         os.system(adb_cmd)
         time.sleep(5)
@@ -132,11 +132,11 @@ class Device:
                 self.wait_for_device()
 
     def adb(self):
-        signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser(Config.adb_key_path))
+        signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser(Config.get_config().adb_key_path))
         return adb_commands.AdbCommands.Connect(self.usbdev, rsa_keys=[signer])
 
     def fastboot(self):
-        return fastboot.FastbootCommands(self.usbdev)
+        return fastboot.FastbootCommands().ConnectDevice(handle=self.usbdev)
 
     def serial_number(self):
         self.wait_for_device()
@@ -222,7 +222,7 @@ class Device:
                 raise FastbootCommandNotFound()
             raise FastbootTimeoutException
 
-        except FastbootRemoteFailure, e:
+        except FastbootRemoteFailure as e:
             r = self.get_last_fb_output()
             error = e.msg
             if self.is_fb_error(error+r, cmd):
@@ -268,7 +268,7 @@ class Device:
     """
     def device(self):
         try:
-            return Config.bootloader_names[self.bootloader_name()]
+            return Config.get_config().bootloader_names[self.bootloader_name()]
         except KeyError:
             return self.bootloader_name()
 
@@ -278,7 +278,7 @@ class Device:
     """
     def adb_get_state(self):
         try:
-            output = subprocess.check_output([Config.adb_path, "get-state"], stderr=subprocess.STDOUT)
+            output = subprocess.check_output([Config.get_config().adb_path, "get-state"], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return State.DISCONNECTED
 
@@ -300,9 +300,9 @@ class Device:
             return
 
         try:
-            self.fb_error = self.do_fb_command("Oem", True, Config.oem_error_cmd)
+            self.fb_error = self.do_fb_command("Oem", True, Config.get_config().oem_error_cmd)
         except FastbootRemoteFailure as e:
-            self.fb_error = e.msg + self.get_last_fb_output()
+            self.fb_error = e.msg.decode() + self.get_last_fb_output()
         except FastbootTimeoutException as e:
             D("Error is indicated by USB timeout")
             self.fb_error_timeout = True
@@ -320,10 +320,10 @@ class Device:
         if msg == self.fb_error:
             return True
 
-        if self.normalize_fb_error(self.fb_error.replace(Config.oem_error_cmd, cmd)) == msg:
+        if self.normalize_fb_error(self.fb_error.replace(Config.get_config().oem_error_cmd, cmd)) == msg:
             return True
 
-        if self.normalize_fb_error(self.fb_error.replace(Config.oem_error_cmd, re.split("\s", cmd)[0])) == msg:
+        if self.normalize_fb_error(self.fb_error.replace(Config.get_config().oem_error_cmd, re.split("\s", cmd)[0])) == msg:
             return True
 
         return False
@@ -359,7 +359,7 @@ class CmdLogger:
         self.output = []
 
     def __call__(self, fbmsg):
-        self.output.append(fbmsg.message)
+        self.output.append(fbmsg.message.decode())
 
     def get(self):
         return "\n".join(self.output)

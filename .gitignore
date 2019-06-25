@@ -1,1 +1,6 @@
 *.pyc
+*.swp
+
+runtime/
+data/*
+!data/README.md

@@ -2,12 +2,13 @@
 Author: Roee Hay / Aleph Research / HCL Technologies
 """
 
-from serializable import *
 import json
-import ConfigParser
-DATA_PATH = "./data.json"
-USER_CONFIG_PATH = "./abootool.cfg"
+import configparser
 import io
+
+from serializable import *
+DATA_PATH = "./meta/data.json"
+USER_CONFIG_PATH = "./meta/fuzzboot.cfg"
 
 config = None
 
@@ -41,11 +42,11 @@ class Config(Serializable):
         global config
         if not config:
             config = Config()
-            config.set_data(json.load(file(DATA_PATH, "rb")))
+            config.set_data(json.load(open(DATA_PATH, "rb")))
 
-            data = "[root]\n"+file(USER_CONFIG_PATH, "rb").read()
-            fp = io.BytesIO(data)
-            parser = ConfigParser.RawConfigParser()
+            data = "[root]\n"+open(USER_CONFIG_PATH, "rb").read().decode()
+            fp = io.StringIO(data)
+            parser = configparser.RawConfigParser()
             parser.readfp(fp)
 
             cfg = {}

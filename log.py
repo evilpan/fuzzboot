@@ -5,14 +5,14 @@ from config import Config
 level = logging.INFO
 TRACE = 9
 
-l = logging.getLogger("ABOOTOOL")
+l = logging.getLogger("FUZZBOOT")
 
 
 con = logging.StreamHandler(sys.stderr)
 con.setFormatter(logging.Formatter('%(levelname)1s: %(message)s'))
 con.setLevel(level)
 
-logfile = logging.FileHandler(Config.log_file)
+logfile = logging.FileHandler(Config.get_config().log_file)
 logfile.setFormatter(logging.Formatter('%(asctime)-15s %(levelname)5s: %(message)s'))
 logfile.setLevel(logging.DEBUG)
 
