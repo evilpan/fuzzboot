@@ -6,8 +6,9 @@ Simple fuzzer for discovering hidden fastboot gems.
 
 **Modus Operandi**: Based on static knowledge (strings fetched from available bootloader images), dynamically fuzz for hidden fastboot OEM commands.
 
-Appears in the USENIX WOOT '17 paper: [fastboot oem vuln: Android Bootloader Vulnerabilities in Vendor Customizations (USENIX WOOT '17)](https://www.usenix.org/conference/woot17/workshop-program/presentation/hay)
+Appears in the USENIX WOOT '17 paper: [fastboot oem vuln: Android Bootloader Vulnerabilities in Vendor Customizations (USENIX WOOT '17)][paper]
 
+![demo][./meta/demo.gif]
 
 ## Usage
 1. Download your favourite OTAs/Factory images and populate with `fuzzboot.py -a <dir>`.
@@ -61,9 +62,10 @@ Host environment:
 Add device from image file:
 
 ```terminal
-$ ./fuzzboot.py -vv -e oem -d device -b build -B add -p ./data/aboot.img
+$ ./fuzzboot.py -vv -e oem -d device -b build -B add -p ./runtime/aboot.img
 INFO: Welcome to fuzzboot
 INFO: ./data/oem-device-build.json (2600)
 ```
 
 [abootool]: https://github.com/alephsecurity/abootool
+[paper]: https://www.usenix.org/conference/woot17/workshop-program/presentation/hay

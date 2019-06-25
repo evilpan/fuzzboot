@@ -209,12 +209,11 @@ class Device:
     """
     Issue a fastboot oem command.
     """
-    def oem(self, cmd, allow_timeout=False, allow_usb_error = False):
+    def oem(self, cmd, allow_timeout=False, allow_usb_error=False):
         try:
             r = self.wait_for_fb_command("Oem", allow_timeout, allow_usb_error, cmd)
             if self.is_fb_error(r, cmd):
                 raise FastbootCommandNotFound()
-
             return r
 
         except FastbootTimeoutException:
@@ -314,6 +313,9 @@ class Device:
     Classifies whether a given response for a command indicates it's a non-existing one.
     """
     def is_fb_error(self, msg, cmd):
+        if self.fb_error_timeout:
+            return False
+
         cmd = self.normalize_fb_error(cmd)
         msg = self.normalize_fb_error(msg)
 
