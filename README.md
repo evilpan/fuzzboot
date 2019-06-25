@@ -1,14 +1,14 @@
 # fuzzboot
 
-Forked from [abootool][abootool] By Roee Hay / Aleph Research, HCL Technologies
-
 Simple fuzzer for discovering hidden fastboot gems.
+
+> Forked from [abootool][abootool] By Roee Hay / Aleph Research, HCL Technologies
 
 **Modus Operandi**: Based on static knowledge (strings fetched from available bootloader images), dynamically fuzz for hidden fastboot OEM commands.
 
 Appears in the USENIX WOOT '17 paper: [fastboot oem vuln: Android Bootloader Vulnerabilities in Vendor Customizations (USENIX WOOT '17)][paper]
 
-![demo][./meta/demo.gif]
+![demo](meta/demo.gif)
 
 ## Usage
 1. Download your favourite OTAs/Factory images and populate with `fuzzboot.py -a <dir>`.
@@ -17,7 +17,7 @@ Appears in the USENIX WOOT '17 paper: [fastboot oem vuln: Android Bootloader Vul
 One can force a specific OEM using `-e <oem>` parameter. 
 When it finishes, the tool prints the discovered positive commands (including ones whose response is a fastboot failure), discovered restricted commands, commands which timed-out, and commands which have triggered various errors.
 
-See [fuzzboot.cfg][meta/fuzzboot.cfg] and `fuzzboot.py -h` for advanced usage.
+See [fuzzboot.cfg](meta/fuzzboot.cfg) and `fuzzboot.py -h` for advanced usage.
 
 Explanation of progress bar:
 ```
@@ -62,9 +62,9 @@ Host environment:
 Add device from image file:
 
 ```terminal
-$ ./fuzzboot.py -vv -e oem -d device -b build -B add -p ./runtime/aboot.img
+$ ./fuzzboot.py add -p ./runtime/aboot.img --raw
 INFO: Welcome to fuzzboot
-INFO: ./data/oem-device-build.json (2600)
+INFO: ./data/unknown-unknown-unknown.json (2600)
 ```
 
 [abootool]: https://github.com/alephsecurity/abootool
