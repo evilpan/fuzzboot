@@ -2,12 +2,14 @@
 Author: Roee Hay / Aleph Research / HCL Technologies
 """
 
-from serializable import *
 import json
 import configparser
+
+import io
+
+from serializable import *
 DATA_PATH = "./data.json"
 USER_CONFIG_PATH = "./abootool.cfg"
-import io
 
 config = None
 
@@ -41,13 +43,11 @@ class Config(Serializable):
         global config
         if not config:
             config = Config()
-            with open(DATA_PATH, "rb") as fh:
-                config.set_data(json.load(fh))
+            config.set_data(json.load(open(DATA_PATH, "rb")))
 
-            with open(USER_CONFIG_PATH, "rb") as fh:
-                data = "[root]\n"+fh.read()
-            fp = io.BytesIO(data)
-            parser = ConfigParser.RawConfigParser()
+            data = "[root]\n"+open(USER_CONFIG_PATH, "rb").read().decode()
+            fp = io.StringIO(data)
+            parser = configparser.RawConfigParser()
             parser.readfp(fp)
 
             cfg = {}

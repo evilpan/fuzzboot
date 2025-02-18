@@ -2,20 +2,20 @@
 Author: Roee Hay / Aleph Research / HCL Technologies
 """
 
-import string
 import json
 import hashlib
 import os
 from serializable import Serializable
 from log import *
 from config import Config
+import utils
 
 bootloaders_by_device = {}
 bootloaders_by_oem = {}
 bootloaders = None
 
 
-def get_bootloaders(path=Config.data_path):
+def get_bootloaders(path=Config.get_config().data_path):
     global bootloaders
     if bootloaders:
         return bootloaders
@@ -26,10 +26,10 @@ def get_bootloaders(path=Config.data_path):
         if f.endswith(".json"):
             bl = ABOOT.create_from_json(os.path.join(path, f))
             bootloaders.append(bl)
-            if not bootloaders_by_oem.has_key(bl.oem):
+            if bl.oem not in bootloaders_by_oem:
                 bootloaders_by_oem[bl.oem] = []
             bootloaders_by_oem[bl.oem].append(bl)
-            if not bootloaders_by_device.has_key(bl.device):
+            if bl.device not in bootloaders_by_device:
                 bootloaders_by_device[bl.device] = []
             bootloaders_by_device[bl.device].append(bl)
             n+=1
@@ -72,8 +72,7 @@ def all():
 class ABOOT(Serializable):
     @classmethod
     def create_from_json(cls, path):
-        with open(path, "rb") as fh:
-            data = json.load(fh)
+        data = json.load(open(path, "rb"))
         return ABOOT().set_data(data)
 
     @classmethod
@@ -81,24 +80,8 @@ class ABOOT(Serializable):
         data = fp.read()
         sha256 = hashlib.sha256(data).hexdigest()
         D("SHA256 = %s", sha256)
-        s = ""
-        printable = set(string.printable)
-        strings = set()
-        i = 0
-        for c in data:
-            if 0 == i % 2**20:
-                T("%d", i >> 20)
-            if c in printable:
-                s += c
-            else:
-                if "" != s:
-                    if s.startswith(strprefix):
-                        strings.add(s)
-                    s = ""
-            i += 1
-
-        strings = list(strings)
-        strings.sort()
+        # strings = utils.get_strings(data, strprefix)
+        strings = utils.shell_get_strings(fp.name, strprefix)
         return ABOOT().set_data({'src': src,
                                  'name': name,
                                  'sha256': sha256,

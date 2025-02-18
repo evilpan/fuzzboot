@@ -35,7 +35,8 @@ class Serializable(object):
         return self
 
     def save(self,path):
-        if os.path.isfile(path):
+        if os.path.exists(path):
             return False
-        open(path, "wb").write(self.dump())
+        with open(path, 'w') as f:
+            f.write(self.dump())
         return True

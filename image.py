@@ -17,11 +17,12 @@ def add(path):
 
     if os.path.isfile(path):
         T(path)
-        if Config.treat_as_blob:
+        if Config.get_config().treat_as_blob:
             add_blob_file(path)
-        add_image(path)
+        else:
+            add_image(path)
     else:
-        if Config.treat_as_blob:
+        if Config.get_config().treat_as_blob:
             E("Specified path must be a blob")
             return
 
@@ -39,7 +40,7 @@ def add_image(path):
 
 
 def add_blob_file(path):
-    return add_any_image(BlobArchive, path, Config.oem, Config.device, Config.build)
+    return add_any_image(BlobArchive, path, Config.get_config().oem, Config.get_config().device, Config.get_config().build)
 
 
 def add_ota_file(path):
@@ -65,7 +66,8 @@ def add_any_image(cls, *kargs):
             return
         return add_aboot(img)
 
-    except (zipfile.BadZipfile, IOError, ImageArchiveParseException):
+    except (zipfile.BadZipfile, IOError, ImageArchiveParseException) as e:
+        E('error: %s', str(e))
         pass
 
 
@@ -75,13 +77,14 @@ def add_aboot(archive):
                                                   device=archive.get_device(), build=archive.get_build(),
                                                   src=os.path.basename(archive.get_path()),
                                                   name=name,
-                                                  strprefix=Config.string_prefix)
+                                                  strprefix=Config.get_config().string_prefix)
 
     skipped = "(SKIPPED)"
-    if bl.save('%s/%s-%s-%s.json' % (Config.data_path, bl.oem, bl.device, bl.build)):
+    fname = '%s/%s-%s-%s.json' % (Config.get_config().data_path, bl.oem, bl.device, bl.build)
+    if bl.save(fname):
         skipped = ""
 
-    I("%s (%d) %s SAVING" % (bl, len(bl.strings), skipped))
+    I("%s (%d) %s" % (fname, len(bl.strings), skipped))
     return bl
 
 
@@ -241,7 +244,7 @@ class OTA(ImageArchive):
     def get_aboot_image(self):
         d = self.get_device()
 
-        for path in Config.ota_prevalent_aboot_paths:
+        for path in Config.get_config().ota_prevalent_aboot_paths:
             try:
                 return (os.path.basename(path), self.zip.open(path))
             except KeyError:
@@ -259,12 +262,12 @@ class OTA(ImageArchive):
             curdir = shutil.abspath(".")
             os.chdir(tmpdir)
             try:
-                subprocess.check_output([Config.ota_umkbootimg_path, "droidboot.img"], stderr=subprocess.STDOUT)
-                subprocess.check_output([Config.ota_unpack_ramdisk_path, "initramfs.cpio.gz"],stderr=subprocess.STDOUT)
+                subprocess.check_output([Config.get_config().ota_umkbootimg_path, "droidboot.img"], stderr=subprocess.STDOUT)
+                subprocess.check_output([Config.get_config().ota_unpack_ramdisk_path, "initramfs.cpio.gz"],stderr=subprocess.STDOUT)
             except OSError as e:
                 E("Cannot execute umkbootimg/unpack_ramdisk while handling %s. " % self.path)
-                E("ota_umkbootimg_path = %s" % Config.ota_umkbootimg_path)
-                E("ota_unpack_ramdisk_path = %s" % Config.ota_unpack_ramdisk_path)
+                E("ota_umkbootimg_path = %s" % Config.get_config().ota_umkbootimg_path)
+                E("ota_unpack_ramdisk_path = %s" % Config.get_config().ota_unpack_ramdisk_path)
                 raise OTAParseException()
 
             data = file("./ramdisk/system/bin/droidboot", "rb").read()
@@ -337,7 +340,7 @@ class Factory(ImageArchive):
         # for the rest we fallback to bootloader-*.img which is supposed to contain aboot.
         # Not very robust as data may be compressed, encoded, whatever.
 
-        if Config.factory_fallback_bootloader:
+        if Config.get_config().factory_fallback_bootloader:
             for n in self.zip.namelist():
                 if "bootloader-" in n:
                     D("Found bootloader: %s" % n)
@@ -399,7 +402,7 @@ class BlobArchive(ImageArchive):
 
     def get_aboot_image(self):
         try:
-            return (os.path.basename(self.path), open(self.path))
+            return (os.path.basename(self.path), open(self.path, 'rb'))
         except IOError:
             raise BlobArchiveParseException()
 
@@ -462,8 +465,8 @@ class OEMS:
     @classmethod
     def load(cls):
         cls._oems = {}
-        for o in Config.oems:
-            for d in Config.oems[o]:
+        for o in Config.get_config().oems:
+            for d in Config.get_config().oems[o]:
                 cls._oems[d] = o
 
     @classmethod
