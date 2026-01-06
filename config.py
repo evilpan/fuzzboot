@@ -47,7 +47,7 @@ class Config(Serializable):
             data = "[root]\n"+open(USER_CONFIG_PATH, "rb").read().decode()
             fp = io.StringIO(data)
             parser = configparser.RawConfigParser()
-            parser.readfp(fp)
+            parser.read_file(fp)
 
             cfg = {}
             for k in parser.options("root"):

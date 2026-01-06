@@ -5,7 +5,7 @@ Author: Roee Hay / Aleph Research / HCL Technologies
 import os
 import re
 from serializable import Serializable
-from adb import fastboot,common,usb_exceptions,adb_commands, sign_m2crypto
+from adb import fastboot,common,usb_exceptions,adb_commands, sign_cryptography
 from log import *
 from config import Config
 from enum import Enum
@@ -132,7 +132,7 @@ class Device:
                 self.wait_for_device()
 
     def adb(self):
-        signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser(Config.get_config().adb_key_path))
+        signer = sign_cryptography.CryptographySigner(os.path.expanduser(Config.get_config().adb_key_path))
         return adb_commands.AdbCommands.Connect(self.usbdev, rsa_keys=[signer])
 
     def fastboot(self):
